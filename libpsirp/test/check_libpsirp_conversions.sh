@@ -1,0 +1,54 @@
+#!/bin/sh
+
+. ../../test/check_prepare.sh
+
+PROG=./libpsirp_id2asc
+
+basic_test() {
+    vmsg "Testing single ascii-to-id conversion"
+    check $PROG $REVERSE $VERB -e 0 -a ::
+    check $PROG $REVERSE $VERB -e 0 -a 50342575::63527483
+    check $PROG $REVERSE $VERB -e 0 -a 09911abfed::
+    check $PROG $REVERSE $VERB -e 0 -a 000000000000000000000000::
+    check $PROG $REVERSE $VERB -e 0 -a 123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0
+    check $PROG $REVERSE $VERB -e 0 -a ::0000000000
+    check $PROG $REVERSE $VERB -e 0 -a ::A0
+    check $PROG $REVERSE $VERB -e 0 -a f0::0f
+
+    vmsg "Testing combined ascii-to-ids conversion"
+    check $PROG $REVERSE $VERB -e 0 -a ::/::
+    check $PROG $REVERSE $VERB -e 0 -a ::00/12::
+    check $PROG $REVERSE $VERB -e 0 -a 1212::ADDA/::
+    check $PROG $REVERSE $VERB -e 0 -a ::/abfce0::
+    check $PROG $REVERSE $VERB -e 0 -a 123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0/::
+    check $PROG $REVERSE $VERB -e 0 -a ::/123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0
+    check $PROG $REVERSE $VERB -e 0 -a 123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0/123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0
+    check $PROG $REVERSE $VERB -e 0 -a ff::/::ff
+    check $PROG $REVERSE $VERB -e 0 -a ac::/::
+    check $PROG $REVERSE $VERB -e 0 -a ::/::dc
+}
+
+msg "Libpsirp unit tests"
+REVERSE=""
+basic_test
+vmsg "Reverse mapping"
+REVERSE="-z"
+basic_test
+
+vmsg "Testing error cases"
+check $PROG $VERB -e 2 -a :
+check $PROG $VERB -e 2 -a 1
+check $PROG $VERB -e 2 -a /
+check $PROG $VERB -e 11 -a 123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF01/::
+check $PROG $VERB -e 11 -a 123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0::/
+check $PROG $VERB -e 12 -a CAFEabba
+check $PROG $VERB -e 13 -a f00::
+check $PROG $VERB -e 15 -a ::afe/abba::
+check $PROG $VERB -e 21 -a ::/123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF01
+check $PROG $VERB -e 21 -a ::/123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0::
+check $PROG $VERB -e 22 -a 5005::/
+check $PROG $VERB -e 23 -a ::/f00::
+check $PROG $VERB -e 25 -a ::cafe/::abb
+
+
+test_end

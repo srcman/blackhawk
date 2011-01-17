@@ -1,0 +1,9 @@
+PSIRP library for FreeBSD
+
+Subdirectories:
+
+include		Header files
+src		Source files
+
+python		SWIG/Python files
+ruby		SWIG/Ruby files

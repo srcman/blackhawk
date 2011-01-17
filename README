@@ -1,0 +1,226 @@
+
+Blackhawk v0.3: A Publish/Subscribe Prototype for FreeBSD
+=========================================================
+
+
+Please visit code.psirp.org!
+
+
+System requirements:
+--------------------
+
+Either:
+* A PC with a 64-bit processor
+* The FreeBSD operating system, version 7.2 or 8.0
+* Internet access or a set of FreeBSD CDs (for installing packages)
+or:
+* A virtual machine image with FreeBSD and Blackhawk preinstalled
+* A computer with a virtual machine system that can run the image
+
+
+Installation:
+-------------
+
+If you have downloaded a virtual machine image with Blackhawk preinstalled,
+you can skip the rest of these installation steps.
+
+The first thing to do is to install some required packages, namely
+autotools, python26, swig, and ruby. This can be done by running the
+'install-prereqs.sh' script. In addtion, you need to have the FreeBSD
+kernel sources installed (can be done with sysinstall).
+
+Next, the build environment needs to be configured with the 'runme.sh' script.
+
+Finally the prototype can be compiled by running 'make', and installed with
+'make install'.
+
+Root privileges are needed for installation.
+
+Example:
+
+# ./install-prereqs.sh
+# ./runme.sh
+# make all install
+
+(Note: by default runme.sh runs configure --prefix=/usr/local
+This should be fine.)
+
+In order to avoid problems, disable multicore support by setting
+kern.smp.disabled=1 in FreeBSD's /boot/loader.conf (and reboot):
+
+# echo kern.smp.disabled=1 >> /boot/loader.conf
+
+
+The installation can be verified by running 'make check'. Running the
+checks can take several minutes. Finally the output should say:
+"All 7 tests passed".
+
+
+Uninstallation is done by running:
+
+# make uninstall
+
+It's adviceable to always uninstall a previous version of Blackhawk
+before upgrading to a new one.
+
+If you want clean up the build system (i.e., automatically generated
+Makefiles etc.), run:
+
+# make clean distclean
+# ./cleanup.sh
+
+
+System Initialization:
+----------------------
+
+The local pub/sub system (kernel module, file system, and scope daemon)
+can be loaded by running:
+
+# loadps
+
+If also the network helpers need to be started, the command is:
+
+# loadps net
+
+(Note that the default network configuration will most probably not work
+in your environment. You need to edit /etc/netiod.conf according to the
+instructions found at code.psirp.org.)
+
+Unloading the system is done with either one of these commands:
+
+# unloadps
+or
+# unloadps net
+
+Reload commands are also provided:
+
+# reloadps
+or
+# reloadps net
+
+
+Directories:
+------------
+
+examples - Programming and configuration examples
+figures  - Blackboard visualization tools
+helpers  - Helper applications
+m4       - Compilation helper scripts
+libpsirp - API
+psfs     - Kernel module and scoped
+test     - Test applications and scripts
+utils    - Utilities
+
+
+Tools:
+------
+
+These apps can be used for simple testing:
+
+Application - Function:
+
+publish     - publish a file or input from stdin
+subscribe   - subscribe to a publication
+subevents   - use kevents to get information about new publications and/or
+              subscriptions
+printscope  - prints scope contents
+
+psirptest   - a tool that can do pretty much the same as the other apps above.
+              Perhaps more of debugging value. Running "psirptest -i" dumps
+              internal state to stdout.
+
+
+Helpers:
+--------
+
+scoped      - Scope Daemon:
+              Updates scope publications when something is published
+
+laird       - Pub/Sub Local Area Intradomain Rendezvous Daemon:
+              Implements a simple link-local network rendezvous mechanism
+
+netiod      - Pub/Sub Network I/O Daemon:
+	      Implements packet sending, receiving, and forwarding
+
+
+File system view:
+-----------------
+
+For debugging and backwards compatibility, the pub/sub system is also
+visible as a set of files and directories:
+
+/pubsub/              - root directory for the file system view
+/pubsub/sid/          - scopes are visible under the root
+/pubsub/sid/rid/      - RIds (including SIds) are visible in scopes
+/pubsub/sid/rid/meta  - read-only view to the binary metadata
+/pubsub/sid/rid/data  - reading gives latest version; writing creates
+                        a publication version
+
+/pubsub/sid/rid/vrid/     - view to a specific version; incl. data & meta
+/pubsub/sid/rid/vrid/prid - read access to individual pages
+
+
+Creating your own applications:
+-------------------------------
+
+The libpsirp API with publish() and subscribe() functions can be used
+for application programming in C, Python, and Ruby. For more
+information, check the API description at code.psirp.org, and also the
+examples/C, examples/python, and examples/ruby directories.
+
+
+Pub/Sub networking:
+-------------------
+
+Note: Networking support in this release is still preliminary. For example,
+publication versioning, demand paging, and subscribe-before-publish are
+NOT supported. Moreover, only simple tree topologies should be set up.
+All links in the network should be point-to-point -- connecting several
+nodes to the same broadcast link is not supported.
+
+'make install' copies a network configuration file template to
+/etc/netiod.conf. This file lists network interfaces and their zFilters.
+Configuration examples are also found under examples/zf.
+
+The configuration file must be edited manually in order to set up a local
+network. Each outgoing link interface must have a link identifier and each
+node must have a virtual identifer pointing to itself. In addition, one node
+is assumed to act as the local rendezvous node. Other nodes must have default
+routes pointing towards that node (i.e., zFilters with the link-Ids on the
+path ORed with the rendezvous node's virtual Id).
+
+
+Performance testing
+-------------------
+
+If you are going to make any performance measurements with Blackhawk,
+you should first completely disable all debug prints that slow down
+the system:
+
+1. Edit runme.sh and change the "./configure --enable-debug $@" line
+   to just "./configure $@".
+
+2. Edit psfs/module/Makefile and replace the "DEBUG_FLAGS=-g -DDEBUG"
+   line with "DEBUG_FLAGS=".
+
+3. Edit libpsirp/python/ps_debug.py and set the PSIRP_PY_DEBUG
+   variable to 0.
+
+4. [Optional: You can also edit the utils/loadps script and set the
+   USER_DEBUG_MASK parameter to 0x0 and KERN_DEBUG_MASK to
+   0x0000000000000000, although these changes shouldn't make any
+   difference after doing the previous steps.]
+
+5. Finally, reconfigure and recompile the system by running (e.g.)
+   "make uninstall clean distclean && ./runme.sh && make all
+   install". Then your system is ready for performance testing.
+
+Note, however, that this will disable all runtime warnings and error
+messages. Hence you should probably check that your test cases work
+before turning off all debug messages.
+
+
+More information:
+-----------------
+
+Please visit code.psirp.org!

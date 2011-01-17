@@ -1,0 +1,92 @@
+===============================================================
+This file has NOT been maintained since v0.1.
+Numerous bugs not visible in the old bugs list have been fixed.
+However, the list of open bugs below is still valid.
+===============================================================
+
+
+Open bugs
+==========
+
+VERSION NUMBER  CAT  Description
+
+r1455   000002  MEM  vm_object reference counts are too conservative.
+
+r1455   000005  FUN  Scopes with more than 126(?) SIDs not supported.
+
+r1584   000006  FUN  Unable to publish when data=0 and dlen=0.  Should 
+                     create only meta.
+                TEST check_publish.sh:  $PUBLISH (no arguments)
+
+r1617   000009  FUN  EV_ONESHOT event flag does not work. 
+                TEST check_bug_000009.sh
+
+r1630   000012  FUN  Reading page publications through the file system
+                     gives the whole publication, not just the one page.
+
+r1721   000015  CRI  inode numbers are a hack.  The file system interface
+                     will cause crashes or behave erratically soon after 
+                     there are too many publications so that inode numbers 
+                     are rolled over.
+
+
+Unreproducible/Old bugs (please test)
+===========
+
+ LAST
+ SEEN   NUMBER  CAT  Description
+
+r1455   000001  MEM  Writes to a memory object after publication 
+                     are visible to subscribers.
+
+r1455   000003  FUN  Subscribe-in-other-scope not supported.
+                TST  r1775: subscribing in any scope works.
+
+r1455   000004  CRI  Crashes on unmount of vnodes still in use.
+                     [Probably fixed but test cases missing.]
+                TST  r1775: does not crash.
+
+r1630   000013  FUN  There is something fishy with page RIDs.  They
+                     seem to differ from run to run.  Should depend
+                     only on content.
+                TST  r1775: page RIDs equal across runs.
+
+
+
+
+Closed bugs
+===========
+
+VERSION NUMBER  CAT  Description
+
+r1584   000006  FUN  Version objects share metadata.  Should have own ones.
+                     No test case.
+                FIX  in r1612 (or so).  
+
+r1595   000007  MEM  Page publications in PIT have NULL in pubi->pi_object.
+                     No test case.
+                FIX  in r1629.
+
+r1612   000008  LCK  Locking missing.  
+                TEST check_bug_000008.sh
+                FIX  in r1616.
+
+r1642   000010  FUN  Synchronized subscribe before any publish
+                     operations fails with errcode: 20 ENOTDIR.
+                TEST check_bug_000010.sh
+                FIX  in r1676.
+
+r1642   000011  LCK  Crashes at random point (doing psfs_reclaim).
+                     panic: Assertion NULL == SLIST_NEXT(pnode, pn_knlink[1]) 
+                     failed at psfs_vnops.c:960
+                FIX  in r1675.  (Offending code removed.)
+
+r1674   000014  FUN  /pubsub events not cleared by reading the data -> 
+                     scoped needs EV_CLEAR flag to function correctly.
+                FIX  in r1679.  Logic revisited.   	
+
+r1722   000016  CRI  Kernel crashes caused by psnode confusion.
+		     panic: psfs_node_allocvp: 0x...->pn_type 2 != 8
+		     panic: psfs_node_allocvp: 0x...->pn_type 1 != 8
+                FIX  in r1755.
+

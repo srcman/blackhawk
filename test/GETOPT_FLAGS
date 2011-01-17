@@ -1,0 +1,30 @@
+GETOPT flags in various test programmes:
+
+cr = create
+pu = publish
+se = subevents
+sc = scoped
+ps = printscope
+
+Flag c p s s p       Meaning
+     r u e c s
+
+-d   X               Data address, pub.pub_data
+-e   X X             Expected error code from the tested syscall
+-f     X             File to read for data
+-f       X           Flags. (for EV_SET)
+-g     X             File to read for metadata
+-k   X               Metadata length, pub.pub_mlen
+-l   X X             Data length, pub.pub_dlen
+-m   X               Metadata address, pub.pub_meta
+-m     X             Mode: What kind of data in data
+-m           X       Monitor (continuous polling)
+-n     X X           Iteration count.
+-p       X           Action: Publish.
+-q     X             Action: No quit.
+-r     X X           RID
+-s     X X   X       SID
+-t       X           Timeout
+-v   + + + + X       Verbose.  + = can be called multiple times
+-x                   Action: Stop on error:
+-z       X           Action: Subscribe

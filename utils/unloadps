@@ -1,0 +1,40 @@
+#!/bin/sh
+
+msg() {
+    printf "\033[0;33m"
+    echo $@
+    printf "\033[0m"
+}
+
+#msg "Kill psirptest"
+#killall psirptest
+
+if [ true ] #[ "$1" = "net" ]
+then
+    msg "Interrupt netiod"
+    killall -SIGINT netiod
+    msg "Interrupt laird"
+    ps ax -ww | awk '/laird/ && !/ awk/ {print $1}' | xargs kill -SIGINT
+    sleep 0.4
+    msg "Terminate netiod"
+    killall netiod
+    msg "Terminate laird"
+    ps ax -ww | awk '/laird/ && !/ awk/ {print $1}' | xargs kill
+else
+fi
+
+msg "Kill subevd"
+killall subevd
+sleep 0.2
+
+msg "Kill scoped"
+killall scoped
+sleep 0.4
+
+msg "Unmount /pubsub"
+umount -f /pubsub
+sleep 0.4
+
+msg "Unload psfs"
+kldunload psfs.ko
+sleep 0.2

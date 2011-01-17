@@ -1,0 +1,21 @@
+#
+# Copyright (C) 2009, Oy L M Ericsson Ab, NomadicLab <pubsub@nomadiclab.com>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 2 as
+# published by the Free Software Foundation.
+#
+# Alternatively, this software may be distributed under the terms of the BSD
+# license.
+#
+# See LICENSE and COPYING for more details.
+#
+
+all:
+	swig -python -outdir . libpsirp.i
+	gcc -fPIC -c ../src/libpsirp.c -o libpsirp.o -I../src -I../include -I../../psirp_io/include
+	gcc -fPIC -c libpsirp_wrap.c -o libpsirp_wrap.o -I/usr/local/include/python2.5 -I. -I../include
+	gcc -shared libpsirp.o libpsirp_wrap.o -o _libpsirp.so
+
+clean:
+	rm -f _libpsirp.so libpsirp.o libpsirp.py libpsirp.pyc libpsirp_wrap.c libpsirp_wrap.o

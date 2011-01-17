@@ -1,0 +1,10 @@
+
+# Static zFilters Configuration File, end node 1
+
+# The outgoing link on interface em1 has FId ::11
+em1;lid;0000000000000000000000000000000000000000000000000000000000000011
+# The default route points to a node behind em1 whose virtual FId is 0000bb::
+em1;def;0000bb0000000000000000000000000000000000000000000000000000000011
+
+# This machine's virtual FId is 00aa::
+virtual0;lid;00aa000000000000000000000000000000000000000000000000000000000000

@@ -1,0 +1,49 @@
+#!/bin/sh
+
+# Userspace debug level (mask as a decimal number)
+USER_DEBUG_LEVEL=7
+NETIOD_DEBUG_LEVEL=$USER_DEBUG_LEVEL
+LAIRD_DEBUG_LEVEL=$USER_DEBUG_LEVEL
+
+# Kernel debug mask (hex number)
+KERN_DEBUG_MASK=0x0000000000000003
+
+msg() {
+    printf "\033[0;33m"
+    echo $@
+    printf "\033[0m"
+}
+
+test -d /pubsub || mkdir /pubsub
+
+msg "Load psfs"
+kldload psfs
+kldstat |grep psfs
+sysctl debug.pubsub_debug_mask=$KERN_DEBUG_MASK
+msg "Mount /pubsub"
+mount -t psfs psfs /pubsub
+
+sleep 0.2
+
+msg "Start scoped"
+nice -n -10 scoped &
+
+if [ "$1" = "net" ]
+then
+    sleep 0.4
+    
+    msg "Start netiod"
+    nice -n -5 netiod -t $NETIOD_DEBUG_LEVEL -c -w /etc/netiod.conf &
+    sleep 0.8
+    
+    msg "Start laird"
+    nice -n -5 laird -t $LAIRD_DEBUG_LEVEL -c &
+    sleep 0.8
+else
+    sleep 0.2
+    
+    msg "Start subevd"
+    nice -n -5 subevd &
+    
+    sleep 0.2
+fi

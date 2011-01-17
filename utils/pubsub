@@ -1,0 +1,162 @@
+#!/bin/sh
+#
+# PROVIDE: pubsub
+# REQUIRE: DAEMON
+# KEYWORD: nojail shutdown
+
+. /etc/rc.subr
+
+name="pubsub"
+rcvar=`set_rcvar`
+#command="/usr/local/sbin/utility"
+
+start_cmd="pubsub_start"
+stop_cmd="pubsub_stop"
+
+netstart_cmd="pubsub_netstart"
+netstop_cmd="pubsub_netstop"
+netrestart_cmd="pubsub_netrestart"
+extra_commands="netstart netstop netrestart"
+
+scoped="/usr/local/sbin/scoped"
+subevd="/usr/local/sbin/subevd"
+netiod="/usr/local/sbin/netiod"
+laird="/usr/local/sbin/laird"
+
+
+PS_DEBUG_LEVEL=7
+
+pubsub_start_kern()
+{
+    echo Load psfs
+    kldload psfs
+    sleep 0.1
+    
+    echo Mount /pubsub
+    mount -t psfs psfs /pubsub
+    sleep 0.2
+}
+
+pubsub_stop_kern()
+{
+    echo Unmount /pubsub
+    umount -f /pubsub
+    sleep 0.2
+    
+    echo Unload psfs
+    kldunload psfs.ko
+    sleep 0.2
+}
+
+pubsub_start_scoped()
+{
+    echo Start scoped
+    $scoped &
+    sleep 0.2
+}
+
+pubsub_stop_scoped()
+{
+    echo Terminate scoped
+    ps ax -ww | awk '/scoped/ && !/ awk/ {print $1}' | xargs kill
+    sleep 0.2
+}
+
+pubsub_start_subevd()
+{
+    echo Start subevd
+    $subevd &
+    sleep 0.2
+}
+
+pubsub_stop_subevd()
+{
+    echo Terminate subevd
+    ps ax -ww | awk '/subevd/ && !/ awk/ {print $1}' | xargs kill
+    sleep 0.2
+}
+
+pubsub_start_netds()
+{
+    echo Start netiod
+    $netiod -t $PS_DEBUG_LEVEL -c -w /etc/netiod.conf &
+    sleep 0.8
+
+    echo Start laird
+    $laird -t $PS_DEBUG_LEVEL -c &
+    sleep 0.8
+}
+
+pubsub_stop_netds()
+{
+    echo Interrupt netiod and laird
+    ps ax -ww | awk '/netiod/ && !/ awk/ {print $1}' | xargs kill -SIGINT
+    ps ax -ww | awk '/laird/ && !/ awk/ {print $1}'  | xargs kill -SIGINT
+    sleep 0.4
+
+    echo Terminate netiod and laird
+    ps ax -ww | awk '/netiod/ && !/ awk/ {print $1}' | xargs kill
+    ps ax -ww | awk '/laird/ && !/ awk/ {print $1}'  | xargs kill
+    sleep 0.2
+}
+
+
+pubsub_start()
+{
+    pubsub_start_kern
+    
+    pubsub_start_scoped
+    pubsub_start_subevd
+}
+
+pubsub_stop()
+{
+    pubsub_stop_netds
+    
+    pubsub_stop_subevd
+    pubsub_stop_scoped
+    
+    sleep 0.4
+    
+    pubsub_stop_kern
+}
+
+pubsub_netstart()
+{
+    pubsub_start_kern
+    
+    pubsub_start_scoped
+    # not subevd
+    
+    pubsub_start_netds
+}
+
+pubsub_netstop()
+{
+    pubsub_stop
+}
+
+pubsub_netrestart()
+{
+    pubsub_netstop
+    sleep 0.2
+
+    pubsub_netstart
+}
+
+
+#
+# DO NOT CHANGE THESE DEFAULT VALUES HERE
+# SET THEM IN THE /etc/rc.conf FILE
+#
+# Not enabled by default. Use onestart/onenetstart etc. instead.
+# Or enable pub/sub in your /etc/rc.conf file:
+# # echo 'pubsub_enable="YES"' >> /etc/rc.conf
+pubsub_enable=${pubsub_enable-"NO"}
+#pubsub_pidfile=${pubsub_pidfile-"/var/run/${name}.pid"}
+
+#pidfile="${pubsub_pidfile}"
+
+
+#load_rc_config $name
+run_rc_command "$1"
